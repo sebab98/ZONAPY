@@ -1,0 +1,17 @@
+.App { text-align: center; }
+.grad-bg { background: linear-gradient(#E0F2FE, white); }
+.cta-button { background-color: #7ED321 !important; }
+.quiz-section { background: #E0F2FE; padding: 30px; border-radius: 8px; }
+.therapist-card { margin-bottom: 30px; }
+.logo { width: 200px; }
+.map { height: 400px; width: 100%; }
+/* Media Queries for Responsivity */
+@media (max-width: 768px) {
+  h1 { font-size: 24px; }
+  .quiz-section { padding: 15px; }
+  .cta-button { width: 100%; }
+  .map { height: 300px; }
+}
+@media (min-width: 992px) {
+  .container { max-width: 90%; }
+}
