@@ -187,7 +187,7 @@ function Home() {
       {/* Map */}
       <section className="container py-5">
         <h2>Terapeutas en Todo Paraguay</h2>
-        <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
+        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
           <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={6} onLoad={loadMap}>
             {filteredTherapists.map((t, index) => (
               <Marker key={index} position={t.location} />
