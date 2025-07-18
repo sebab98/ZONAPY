@@ -44,11 +44,21 @@ db.serialize(() => {
       time TEXT
     )`);
 
-    // Datos iniciales (solo si no existen).
-    console.log('Insertando datos iniciales...');
-    db.run("INSERT OR IGNORE INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Jorge Gutierrez', 'Ansiedad', 'Online', 'IPS', 'Gs. 200.000', -25.2637, -57.5759, 1)");
-    db.run("INSERT OR IGNORE INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Ana López', 'Depresión', 'Presencial', 'Privado', 'Gs. 180.000', -25.2805, -57.6359, 1)");
-    db.run("INSERT OR IGNORE INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Carlos Pérez', 'Parejas', 'Online', 'Sin seguro', 'Gs. 150.000', -25.3, -57.6, 1)");
+    // Chequea si ya hay datos en therapists antes de insertar fake
+    db.get('SELECT COUNT(*) as count FROM therapists', (err, row) => {
+      if (err) {
+        console.error('Error chequeando tabla therapists:', err);
+        return;
+      }
+      if (row.count === 0) {
+        console.log('Insertando datos iniciales (solo primera vez)...');
+        db.run("INSERT INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Jorge Gutierrez', 'Ansiedad', 'Online', 'IPS', 'Gs. 200.000', -25.2637, -57.5759, 1)");
+        db.run("INSERT INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Ana López', 'Depresión', 'Presencial', 'Privado', 'Gs. 180.000', -25.2805, -57.6359, 1)");
+        db.run("INSERT INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Carlos Pérez', 'Parejas', 'Online', 'Sin seguro', 'Gs. 150.000', -25.3, -57.6, 1)");
+      } else {
+        console.log('Datos iniciales ya existen, saltando insert.');
+      }
+    });
   } catch (error) {
     console.error('Error creando tablas o datos:', error);
   }
