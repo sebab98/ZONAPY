@@ -21,7 +21,7 @@ function Home() {
           specialty: quizData.specialty
         });
 
-        const response = await fetch(`http://localhost:3000/therapists?${params.toString()}`);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/therapists?${params.toString()}`);
         if (!response.ok) {
           throw new Error('Error en fetch: ' + response.statusText);
         }
@@ -56,7 +56,7 @@ function Home() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:3000/bookings', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +69,8 @@ function Home() {
         })
       });
       if (!response.ok) {
-        throw new Error('Error en booking: ' + (await response.json()).error);
+        const errorData = await response.json();
+        throw new Error('Error en booking: ' + (errorData.error || response.statusText));
       }
       alert('Booking creado exitosamente!');
       setBookingDate('');  // Limpia form.
@@ -95,7 +96,7 @@ function Home() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Resto del return igual, no cambia */}
       <header className="text-center py-5 grad-bg">
         <img src="/logo.png" alt="ZONAPY Logo" className="logo" />
         <h1>Encuentra el mejor terapeuta local</h1>

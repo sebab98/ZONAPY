@@ -10,35 +10,48 @@ export const AuthProvider = ({ children }) => {  // Componente que envuelve tu a
   useEffect(() => {  // Ejecuta al cargar: Check si hay token guardado.
     const token = localStorage.getItem('token');  // Busca token en "almacenamiento local" del browser.
     if (token) {
-      const decoded = jwtDecode(token);  // Decode para obtener id/role.
-      setCurrentUser({ token, id: decoded.id, role: decoded.role });
+      try {
+        const decoded = jwtDecode(token);  // Decode para obtener id/role.
+        setCurrentUser({ token, id: decoded.id, role: decoded.role });
+      } catch (error) {
+        console.error('Token inválido:', error);
+        localStorage.removeItem('token');  // Limpia si token malo.
+      }
     }
     setLoading(false);  // Termina loading.
   }, []);
 
   const signup = async (email, password, role) => {  // Función para registro.
-    const response = await fetch('http://localhost:3000/register', {  // Envía a back.
-      method: 'POST',  // Tipo de envío: Crear nuevo.
-      headers: { 'Content-Type': 'application/json' },  // Dice que envía JSON.
-      body: JSON.stringify({ email, password, role })  // Convierte datos a string JSON.
-    });
-    if (!response.ok) {  // Si error.
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Registro falló');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/register`, {  // Envía a back.
+        method: 'POST',  // Tipo de envío: Crear nuevo.
+        headers: { 'Content-Type': 'application/json' },  // Dice que envía JSON.
+        body: JSON.stringify({ email, password, role })  // Convierte datos a string JSON.
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registro falló');
+      }
+    } catch (error) {
+      throw new Error('Error en signup: ' + error.message);  // Para que Login/Register lo atrapen.
     }
   };
 
   const login = async (email, password) => {  // Función para login.
-    const response = await fetch('http://localhost:3000/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Login falló');
-    localStorage.setItem('token', data.token);  // Guarda token en browser.
-    const decoded = jwtDecode(data.token);  // Decode para id/role.
-    setCurrentUser({ token: data.token, id: decoded.id, role: decoded.role });  // Actualiza estado.
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Login falló');
+      localStorage.setItem('token', data.token);  // Guarda token en browser.
+      const decoded = jwtDecode(data.token);  // Decode para id/role.
+      setCurrentUser({ token: data.token, id: decoded.id, role: decoded.role });  // Actualiza estado.
+    } catch (error) {
+      throw new Error('Error en login: ' + error.message);  // Para que Login lo atrape.
+    }
   };
 
   const logout = () => {  // Función para logout.
