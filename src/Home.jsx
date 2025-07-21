@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';  // Estilos Bootstrap.
-import { Container, Row, Col, Button, Form, Card } from 'react-bootstrap';  // Componentes.
-import { useState, useCallback, useEffect, useContext } from 'react';  // Hooks (añadí useContext).
+import { Container, Row, Col, Button, Form, Card, Modal } from 'react-bootstrap';  // Añadido Modal.
+import { useState, useCallback, useEffect, useContext } from 'react';  // Hooks.
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';  // Mapa.
 import { AuthContext } from './context/AuthContext';  // Para token/currentUser.
 
@@ -11,7 +11,11 @@ function Home() {
   const [bookingTime, setBookingTime] = useState('');  // Estado para time.
   const { currentUser } = useContext(AuthContext);  // Para token.
 
-  // Fetch therapists del backend con filtros (reemplaza hardcode).
+  // Nuevos estados para modal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTherapist, setSelectedTherapist] = useState(null);
+
+  // Fetch therapists del backend con filtros.
   useEffect(() => {
     const fetchTherapists = async () => {
       try {
@@ -48,13 +52,27 @@ function Home() {
     setQuizData({ seguro, modality, specialty });
   };
 
-  // Nueva: Handle submit de booking form.
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    if (!currentUser) {
-      alert('Debes loguearte primero para reservar.');
+  // Nueva: Abre modal con terapeuta seleccionado
+  const handleOpen = (therapist) => {
+    if (!currentUser || currentUser.role !== 'client') {
+      alert('Debes loguearte como cliente para reservar.');
       return;
     }
+    setSelectedTherapist(therapist);
+    setShowModal(true);
+    setBookingDate('');  // Limpia form al abrir
+    setBookingTime('');
+  };
+
+  // Nueva: Cierra modal
+  const handleClose = () => {
+    setShowModal(false);
+    setSelectedTherapist(null);
+  };
+
+  // Handle submit de booking form (dinámico con selectedTherapist.id)
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/bookings`, {
         method: 'POST',
@@ -63,7 +81,7 @@ function Home() {
           'Authorization': `Bearer ${currentUser.token}`  // Token para auth.
         },
         body: JSON.stringify({
-          therapist_id: 1,  // Hardcode por ahora (Jorge).
+          therapist_id: selectedTherapist.id,  // Dinámico!
           date: bookingDate,
           time: bookingTime
         })
@@ -73,10 +91,9 @@ function Home() {
         throw new Error('Error en booking: ' + (errorData.error || response.statusText));
       }
       alert('Booking creado exitosamente!');
-      setBookingDate('');  // Limpia form.
-      setBookingTime('');
+      handleClose();  // Cierra modal al éxito
     } catch (error) {
-      alert('Error: ' + error.message);  // Manejo de errores comunes (ej. no token, DB error).
+      alert('Error: ' + error.message);
     }
   };
 
@@ -96,7 +113,7 @@ function Home() {
 
   return (
     <div>
-      {/* Resto del return igual, no cambia */}
+      {/* Header */}
       <header className="text-center py-5 grad-bg">
         <img src="/logo.png" alt="ZONAPY Logo" className="logo" />
         <h1>Encuentra el mejor terapeuta local</h1>
@@ -176,8 +193,8 @@ function Home() {
                   <Card.Text>Modalidad: {t.modality}</Card.Text>
                   <Card.Text>Seguro: {t.seguro}</Card.Text>
                   <Card.Text>Precio: {t.price}</Card.Text>
-                  {/* Quité iframe video */}
-                  <Button variant="success" className="cta-button">Reservar Consulta Gratuita</Button>
+                  {/* Botón ahora abre modal con t */}
+                  <Button variant="success" className="cta-button" onClick={() => handleOpen(t)}>Reservar Consulta Gratuita</Button>
                 </Card.Body>
               </Card>
             </Col>
@@ -233,21 +250,7 @@ function Home() {
         </Row>
       </section>
 
-      {/* Booking Form – ahora con onSubmit y value/onChange */}
-      <section id="booking-form" className="container py-5">
-        <h2>Programa tu Sesión</h2>
-        <Form onSubmit={handleBookingSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Fecha</Form.Label>
-            <Form.Control type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} required />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Hora</Form.Label>
-            <Form.Control type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} required />
-          </Form.Group>
-          <Button variant="success" type="submit" className="cta-button">Reservar</Button>
-        </Form>
-      </section>
+      {/* Quitamos el form fijo de booking – ahora está en modal */}
 
       {/* Seguros */}
       <section className="container py-5">
@@ -270,6 +273,26 @@ function Home() {
       <footer className="footer">
         <p>© 2025 ZONAPY – Terapia en Paraguay. Todos los derechos reservados.</p>
       </footer>
+
+      {/* Nuevo: Modal de booking */}
+      <Modal show={showModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Programa tu Sesión con {selectedTherapist?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleBookingSubmit}>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha</Form.Label>
+              <Form.Control type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Hora</Form.Label>
+              <Form.Control type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} required />
+            </Form.Group>
+            <Button variant="success" type="submit" className="cta-button">Reservar</Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
