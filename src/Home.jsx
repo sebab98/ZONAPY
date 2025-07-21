@@ -250,8 +250,6 @@ function Home() {
         </Row>
       </section>
 
-      {/* Quitamos el form fijo de booking – ahora está en modal */}
-
       {/* Seguros */}
       <section className="container py-5">
         <h2>Seguros Médicos Aceptados</h2>
@@ -274,7 +272,7 @@ function Home() {
         <p>© 2025 ZONAPY – Terapia en Paraguay. Todos los derechos reservados.</p>
       </footer>
 
-      {/* Nuevo: Modal de booking */}
+      {/* Modal de booking */}
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>Programa tu Sesión con {selectedTherapist?.name}</Modal.Title>
