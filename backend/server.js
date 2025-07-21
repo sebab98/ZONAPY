@@ -1,26 +1,37 @@
-import express from 'express';  // Servidor web simple.
-import pg from 'pg';  // Nueva lib para PostgreSQL.
-import bcrypt from 'bcrypt';  // Encripta passwords.
-import jwt from 'jsonwebtoken';  // Tokens for auth.
-import cors from 'cors';  // Permite requests de front.
-import dotenv from 'dotenv'; dotenv.config(); // Para cargar .env local
+import express from 'express';
+import pg from 'pg';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const app = express();  // Crea app server.
-app.use(express.json());  // Lee JSON en requests.
-app.use(cors({ origin: '*' }));  // Permite todo por ahora; cambia a tu dominio en prod.
+const app = express();
+app.use(express.json());
+app.use(cors({ origin: '*' }));
 
-const SECRET_KEY = 'tu_secreto_super_secreto';  // Usa .env en futuro.
+const SECRET_KEY = 'tu_secreto_super_secreto';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false  // SSL solo en prod
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Crea tablas si no existen (async para pg).
+// Test conexión
+(async () => {
+  try {
+    const client = await pool.connect();
+    console.log('Conexión exitosa a PostgreSQL');
+    client.release();
+  } catch (error) {
+    console.error('Error de conexión:', error);
+  }
+})();
+
+// Creación tablas
 (async () => {
   const client = await pool.connect();
   try {
-    console.log('Creando tabla users...');
     await client.query(`CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       email TEXT UNIQUE,
@@ -28,7 +39,6 @@ const pool = new pg.Pool({
       role TEXT
     )`);
 
-    console.log('Creando tabla therapists...');
     await client.query(`CREATE TABLE IF NOT EXISTS therapists (
       id SERIAL PRIMARY KEY,
       name TEXT,
@@ -41,7 +51,6 @@ const pool = new pg.Pool({
       verified INTEGER DEFAULT 0
     )`);
 
-    console.log('Creando tabla bookings...');
     await client.query(`CREATE TABLE IF NOT EXISTS bookings (
       id SERIAL PRIMARY KEY,
       client_id INTEGER,
@@ -50,7 +59,6 @@ const pool = new pg.Pool({
       time TEXT
     )`);
 
-    // Chequea e inserta datos fake si tabla vacía.
     const res = await client.query('SELECT COUNT(*) as count FROM therapists');
     if (parseInt(res.rows[0].count) === 0) {
       console.log('Insertando datos iniciales...');
@@ -58,21 +66,47 @@ const pool = new pg.Pool({
       await client.query("INSERT INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Ana López', 'Depresión', 'Presencial', 'Privado', 'Gs. 180.000', -25.2805, -57.6359, 1)");
       await client.query("INSERT INTO therapists (name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ('Carlos Pérez', 'Parejas', 'Online', 'Sin seguro', 'Gs. 150.000', -25.3, -57.6, 1)");
     } else {
-      console.log('Datos iniciales ya existen, saltando insert.');
+      console.log('Datos iniciales ya existen.');
     }
   } catch (error) {
-    console.error('Error creando tablas o datos:', error);
+    console.error('Error creando tablas:', error);
   } finally {
     client.release();
   }
 })();
 
-// Rutas (adaptadas a pg – usa $1, $2 para params).
+// Middleware authenticate (agregado aquí)
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
+
+// Rutas
 app.post('/register', async (req, res) => {
   const { email, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO users (email, password, role) VALUES ($1, $2, $3)', [email, hashedPassword, role]);
+    await pool.query(
+      'INSERT INTO users (email, password, role) VALUES ($1, $2, $3)',
+      [email, hashedPassword, role]
+    );
+    const { rows } = await pool.query("SELECT currval('users_id_seq') as id");
+    const newUserId = rows[0].id;
+
+    if (role === 'therapist') {
+      await pool.query(
+        'INSERT INTO therapists (id, name, specialty, modality, seguro, price, location_lat, location_lng, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+        [newUserId, 'Nuevo Terapeuta', '', '', '', '', 0, 0, 0]
+      );
+    }
+
     res.json({ message: 'Registrado ok' });
   } catch (error) {
     console.error('Error en register:', error);
@@ -96,20 +130,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Middleware auth – mismo.
-const authenticate = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
-  try {
-    const decoded = jwt.verify(token, SECRET_KEY);
-    req.user = decoded;
-    next();
-  } catch {
-    res.status(401).json({ error: 'Token inválido' });
-  }
-};
-
-// Get therapists – con filtros.
 app.get('/therapists', async (req, res) => {
   try {
     let sql = 'SELECT * FROM therapists WHERE verified = 1';
@@ -135,7 +155,6 @@ app.get('/therapists', async (req, res) => {
   }
 });
 
-// POST /bookings.
 app.post('/bookings', authenticate, async (req, res) => {
   const { therapist_id, date, time } = req.body;
   const client_id = req.user.id;
@@ -148,7 +167,6 @@ app.post('/bookings', authenticate, async (req, res) => {
   }
 });
 
-// GET /bookings.
 app.get('/bookings', authenticate, async (req, res) => {
   const client_id = req.user.id;
   try {
@@ -160,17 +178,13 @@ app.get('/bookings', authenticate, async (req, res) => {
   }
 });
 
-// POST /therapists (update profile for authenticated therapist)
 app.post('/therapists', authenticate, async (req, res) => {
   const { name, specialty, modality, seguro, price } = req.body;
-  const therapist_id = req.user.id;  // Solo edita su propio profile
+  const therapist_id = req.user.id;
   try {
-    const { rows } = await pool.query(
-      'SELECT * FROM therapists WHERE id = $1 AND verified = 1',
-      [therapist_id]
-    );
+    const { rows } = await pool.query('SELECT * FROM therapists WHERE id = $1', [therapist_id]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Terapeuta no encontrado o no verificado' });
+      return res.status(404).json({ error: 'Terapeuta no encontrado' });
     }
     if (req.user.role !== 'therapist') {
       return res.status(403).json({ error: 'Solo terapeutas pueden editar profiles' });

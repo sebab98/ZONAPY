@@ -12,6 +12,13 @@ const Dashboard = () => {
   const [price, setPrice] = useState('');
 
   useEffect(() => {
+    // Reset fields al cargar
+    setName('');
+    setSpecialty('');
+    setModality('');
+    setSeguro('');
+    setPrice('');
+
     if (currentUser?.role === 'client') {
       const fetchBookings = async () => {
         try {
@@ -28,7 +35,6 @@ const Dashboard = () => {
       };
       fetchBookings();
     } else if (currentUser?.role === 'therapist') {
-      // Fetch current therapist profile (opcional, si quieres prellenar)
       const fetchTherapistProfile = async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/therapists?id=${currentUser.id}`, {
@@ -36,12 +42,16 @@ const Dashboard = () => {
           });
           if (response.ok) {
             const data = await response.json();
-            const therapist = data[0]; // Asume retorna array con 1 terapeuta
-            setName(therapist.name || '');
-            setSpecialty(therapist.specialty || '');
-            setModality(therapist.modality || '');
-            setSeguro(therapist.seguro || '');
-            setPrice(therapist.price || '');
+            if (data.length > 0) {
+              const therapist = data[0];
+              setName(therapist.name || '');
+              setSpecialty(therapist.specialty || '');
+              setModality(therapist.modality || '');
+              setSeguro(therapist.seguro || '');
+              setPrice(therapist.price || '');
+            } else {
+              // Si no data, defaults vacíos (ya reseteados)
+            }
           }
         } catch (error) {
           console.error('Error fetching profile:', error);
