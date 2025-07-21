@@ -3,6 +3,7 @@ import pg from 'pg';  // Nueva lib para PostgreSQL.
 import bcrypt from 'bcrypt';  // Encripta passwords.
 import jwt from 'jsonwebtoken';  // Tokens for auth.
 import cors from 'cors';  // Permite requests de front.
+import dotenv from 'dotenv'; dotenv.config(); // Para cargar .env local
 
 const app = express();  // Crea app server.
 app.use(express.json());  // Lee JSON en requests.
@@ -11,8 +12,8 @@ app.use(cors({ origin: '*' }));  // Permite todo por ahora; cambia a tu dominio 
 const SECRET_KEY = 'tu_secreto_super_secreto';  // Usa .env en futuro.
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,  // Render setea esto auto; local usa .env.
-  ssl: { rejectUnauthorized: false }  // Para conexiones seguras en cloud.
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false  // SSL solo en prod
 });
 
 // Crea tablas si no existen (async para pg).
