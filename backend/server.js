@@ -160,5 +160,31 @@ app.get('/bookings', authenticate, async (req, res) => {
   }
 });
 
+// POST /therapists (update profile for authenticated therapist)
+app.post('/therapists', authenticate, async (req, res) => {
+  const { name, specialty, modality, seguro, price } = req.body;
+  const therapist_id = req.user.id;  // Solo edita su propio profile
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM therapists WHERE id = $1 AND verified = 1',
+      [therapist_id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Terapeuta no encontrado o no verificado' });
+    }
+    if (req.user.role !== 'therapist') {
+      return res.status(403).json({ error: 'Solo terapeutas pueden editar profiles' });
+    }
+    await pool.query(
+      'UPDATE therapists SET name = $1, specialty = $2, modality = $3, seguro = $4, price = $5 WHERE id = $6',
+      [name, specialty, modality, seguro, price, therapist_id]
+    );
+    res.json({ message: 'Profile actualizado exitosamente' });
+  } catch (error) {
+    console.error('Error en update therapist:', error);
+    res.status(500).json({ error: 'Error actualizando profile: ' + error.message });
+  }
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server en puerto ${port}`));

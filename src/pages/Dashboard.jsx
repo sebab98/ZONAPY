@@ -5,6 +5,11 @@ import { AuthContext } from '../context/AuthContext';
 const Dashboard = () => {
   const { currentUser } = useContext(AuthContext);
   const [bookings, setBookings] = useState([]);
+  const [name, setName] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [modality, setModality] = useState('');
+  const [seguro, setSeguro] = useState('');
+  const [price, setPrice] = useState('');
 
   useEffect(() => {
     if (currentUser?.role === 'client') {
@@ -22,16 +27,49 @@ const Dashboard = () => {
         }
       };
       fetchBookings();
+    } else if (currentUser?.role === 'therapist') {
+      // Fetch current therapist profile (opcional, si quieres prellenar)
+      const fetchTherapistProfile = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/therapists?id=${currentUser.id}`, {
+            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const therapist = data[0]; // Asume retorna array con 1 terapeuta
+            setName(therapist.name || '');
+            setSpecialty(therapist.specialty || '');
+            setModality(therapist.modality || '');
+            setSeguro(therapist.seguro || '');
+            setPrice(therapist.price || '');
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      };
+      fetchTherapistProfile();
     }
   }, [currentUser]);
 
-  const handlePay = () => {
-    alert('Pago mock exitoso! Suscripción activada.');
-  };
-
-  const handleEditProfile = (e) => {
+  const handleEditProfile = async (e) => {
     e.preventDefault();
-    alert('Profile editado mock! (En futuro: POST /therapists)');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/therapists`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ name, specialty, modality, seguro, price })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error updating profile');
+      }
+      alert('Profile actualizado exitosamente!');
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
   };
 
   if (!currentUser) return <p>Cargando...</p>;
@@ -56,17 +94,39 @@ const Dashboard = () => {
         </>
       ) : (
         <>
-          <h3>Edita tu Profile (Therapist)</h3>
+          <h3>Edita tu Profile (Therapeuta)</h3>
           <Form onSubmit={handleEditProfile}>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Nombre</Form.Label>
-              <Form.Control type="text" placeholder="Nuevo nombre" />
+              <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} required />
             </Form.Group>
-            {/* Añade más fields como specialty, etc. en futuro */}
-            <Button type="submit">Guardar</Button>
+            <Form.Group className="mb-3">
+              <Form.Label>Especialidad</Form.Label>
+              <Form.Control type="text" value={specialty} onChange={(e) => setSpecialty(e.target.value)} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Modalidad</Form.Label>
+              <Form.Control as="select" value={modality} onChange={(e) => setModality(e.target.value)} required>
+                <option value="">Selecciona</option>
+                <option value="Online">Online</option>
+                <option value="Presencial">Presencial</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Seguro</Form.Label>
+              <Form.Control as="select" value={seguro} onChange={(e) => setSeguro(e.target.value)} required>
+                <option value="">Selecciona</option>
+                <option value="IPS">IPS</option>
+                <option value="Privado">Privado</option>
+                <option value="Sin seguro">Sin seguro</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Precio (ej. Gs. 200.000)</Form.Label>
+              <Form.Control type="text" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            </Form.Group>
+            <Button type="submit">Guardar Cambios</Button>
           </Form>
-          <h3>Suscripción</h3>
-          <Button onClick={handlePay}>Pagar Suscripción (Mock)</Button>
         </>
       )}
     </Container>
