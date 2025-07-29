@@ -33,11 +33,14 @@ const pool = new pg.Pool({
   const client = await pool.connect();
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE,
-      password TEXT,
-      role TEXT
-    )`);
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE,
+  password TEXT,
+  role TEXT
+)`);
+
+// Agrega sub_tier si no existe (seguro, no falla si ya hay)
+await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_tier TEXT DEFAULT 'basic'`);
 
     await client.query(`CREATE TABLE IF NOT EXISTS therapists (
       id SERIAL PRIMARY KEY,
@@ -132,20 +135,30 @@ app.post('/login', async (req, res) => {
 
 app.get('/therapists', async (req, res) => {
   try {
-    let sql = 'SELECT * FROM therapists WHERE verified = 1';
+    let sql = 'SELECT * FROM therapists';
     const params = [];
     let paramIndex = 1;
+    if (req.query.verified) {
+      sql += ` WHERE verified = $${paramIndex++}`;
+      params.push(req.query.verified);
+    } else {
+      sql += ` WHERE verified = 1`; // Default: solo verificados
+    }
     if (req.query.seguro && req.query.seguro !== 'Todos') {
-      sql += ` AND seguro = $${paramIndex++}`;
+      sql += ` ${params.length ? 'AND' : 'WHERE'} seguro = $${paramIndex++}`;
       params.push(req.query.seguro);
     }
     if (req.query.modality && req.query.modality !== 'Todas') {
-      sql += ` AND modality = $${paramIndex++}`;
+      sql += ` ${params.length ? 'AND' : 'WHERE'} modality = $${paramIndex++}`;
       params.push(req.query.modality);
     }
     if (req.query.specialty && req.query.specialty !== 'Todas') {
-      sql += ` AND specialty = $${paramIndex++}`;
+      sql += ` ${params.length ? 'AND' : 'WHERE'} specialty = $${paramIndex++}`;
       params.push(req.query.specialty);
+    }
+    if (req.query.id) {
+      sql += ` ${params.length ? 'AND' : 'WHERE'} id = $${paramIndex++}`;
+      params.push(req.query.id);
     }
     const { rows } = await pool.query(sql, params);
     res.json(rows);
@@ -197,6 +210,45 @@ app.post('/therapists', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Error en update therapist:', error);
     res.status(500).json({ error: 'Error actualizando profile: ' + error.message });
+  }
+});
+
+// Ruta para suscripción mock de Stripe (protegida con JWT)
+app.post('/subscribe', authenticate, (req, res) => {  // Usa 'authenticate' que ya tienes.
+  const userId = req.user.id;  // ID del user logueado desde JWT.
+  if (req.user.role !== 'therapist') {  // Solo terapeutas se suscriben.
+    return res.status(403).json({ error: 'Solo terapeutas pueden suscribirse' });
+  }
+
+  // Mock de Stripe: Simulamos pago exitoso.
+  console.log(`Subscription paid for user ${userId}`);  // Log "paid".
+
+  const sql = 'UPDATE users SET sub_tier = $1 WHERE id = $2';
+  pool.query(sql, ['premium', userId], (err, result) => {
+    if (err) {
+      console.error('Error updating subscription:', err);
+      return res.status(500).json({ error: 'Error updating subscription' });
+    }
+    res.json({ message: 'Subscription updated to premium' });
+  });
+});
+
+app.post('/approve', authenticate, async (req, res) => {
+  console.log('Solicitud recibida en /approve para therapist_id:', req.body.therapist_id);
+  const { therapist_id } = req.body;
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Solo administradores pueden aprobar terapeutas' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT * FROM therapists WHERE id = $1', [therapist_id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Terapeuta no encontrado' });
+    }
+    await pool.query('UPDATE therapists SET verified = 1 WHERE id = $1', [therapist_id]);
+    res.json({ message: 'Terapeuta aprobado exitosamente' });
+  } catch (error) {
+    console.error('Error aprobando terapeuta:', error);
+    res.status(500).json({ error: 'Error aprobando terapeuta: ' + error.message });
   }
 });
 
