@@ -1,17 +1,48 @@
 .App { text-align: center; }
-.grad-bg { background: linear-gradient(#E0F2FE, white); }
-.cta-button { background-color: #7ED321 !important; }
-.quiz-section { background: #E0F2FE; padding: 30px; border-radius: 8px; }
-.therapist-card { margin-bottom: 30px; }
-.logo { width: 200px; }
-.map { height: 400px; width: 100%; }
-/* Media Queries for Responsivity */
-@media (max-width: 768px) {
-  h1 { font-size: 24px; }
-  .quiz-section { padding: 15px; }
-  .cta-button { width: 100%; }
-  .map { height: 300px; }
+grad-bg {
+  background: linear-gradient(to bottom, #f0f4f8, #d9e2ec); /* Azul calming */
+  color: #243b55;
 }
-@media (min-width: 992px) {
-  .container { max-width: 90%; }
+
+.logo {
+  max-width: 200px;
+  margin-bottom: 20px;
+}
+
+.cta-button {
+  background-color: #28a745; /* Verde calming */
+  border-color: #28a745;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #218838;
+}
+
+.therapist-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.therapist-card:hover {
+  transform: translateY(-5px);
+}
+
+.faq-section ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.faq-section li {
+  margin-bottom: 10px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.faq-section li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #007bff; /* Azul para bullets */
 }
