@@ -1,8 +1,8 @@
-import 'bootstrap/dist/css/bootstrap.min.css';  // Estilos Bootstrap.
-import { Container, Row, Col, Button, Form, Card, Modal } from 'react-bootstrap';  // Añadido Modal.
-import { useState, useCallback, useEffect, useContext } from 'react';  // Hooks.
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';  // Mapa.
-import { AuthContext } from './context/AuthContext';  // Para token/currentUser.
+import 'bootstrap/dist/css/bootstrap.min.css'; // Estilos Bootstrap.
+import { Container, Row, Col, Form, Button, Card, Modal } from 'react-bootstrap'; // Componentes UI.
+import { useState, useCallback, useEffect, useContext } from 'react'; // Hooks.
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api'; // Mapa.
+import { AuthContext } from './context/AuthContext'; // Para token/currentUser.
 
 function Home() {
   const [filteredTherapists, setFilteredTherapists] = useState([]);
@@ -112,187 +112,261 @@ function Home() {
   }, []);
 
   return (
-    <div>
-      {/* Header */}
-      <header className="text-center py-5 grad-bg">
+  <Container className="py-5">
+    {/* Header */}
+    <Row className="text-center mb-5">
+      <Col xs={12}>
         <img src="/logo.png" alt="ZONAPY Logo" className="logo" />
         <h1>Encuentra el mejor terapeuta local</h1>
         <p>Reserva una consulta gratuita hoy en todo Paraguay.</p>
-        <Button href="#quiz" variant="success" size="lg" className="cta-button">Comienza el matching</Button>
-      </header>
+        <Button href="#quiz" variant="success" size="lg" className="cta-button">
+          Comienza el matching
+        </Button>
+      </Col>
+    </Row>
 
-      {/* 3 Pasos */}
-      <Container className="py-5">
+    {/* 3 Pasos */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Proceso en 3 pasos</h2>
-        <Row>
-          <Col md={4}>
-            <h3>1. Dinos lo que te importa</h3>
-            <p>Completa nuestro quiz de matching.</p>
-          </Col>
-          <Col md={4}>
-            <h3>2. Reserva Consulta Gratuita</h3>
-            <p>Ve profiles y videos introductorios.</p>
-          </Col>
-          <Col md={4}>
-            <h3>3. Empieza Terapia</h3>
-            <p>Conecta con tu terapeuta ideal.</p>
-          </Col>
-        </Row>
-      </Container>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <h3>1. Dinos lo que te importa</h3>
+        <p>Completa nuestro quiz de matching.</p>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <h3>2. Reserva Consulta Gratuita</h3>
+        <p>Ve profiles y videos introductorios.</p>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <h3>3. Empieza Terapia</h3>
+        <p>Conecta con tu terapeuta ideal.</p>
+      </Col>
+    </Row>
 
-      {/* Quiz */}
-      <section id="quiz" className="container quiz-section py-5">
+    {/* Quiz */}
+    <Row id="quiz" className="quiz-section mb-5">
+      <Col xs={12}>
         <h2>Dinos sobre ti</h2>
         <p>Te mostraremos terapeutas en todo Paraguay que podrían encajar contigo.</p>
+      </Col>
+      <Col xs={12}>
         <Form onSubmit={handleQuizSubmit}>
           <Row>
-            <Col md={4}>
-              <Form.Label>Seguro Médico</Form.Label>
-              <Form.Select name="seguro">
-                <option>Todos</option>
-                <option>IPS</option>
-                <option>Privado</option>
-                <option>Sin seguro</option>
-              </Form.Select>
+            <Col xs={12} sm={4} className="mb-3">
+              <Form.Group controlId="formSeguro">
+                <Form.Label>Seguro Médico</Form.Label>
+                <Form.Select
+                  name="seguro"
+                  value={quizData.seguro}
+                  onChange={(e) => setQuizData({ ...quizData, seguro: e.target.value })}
+                >
+                  <option value="Todos">Todos</option>
+                  <option value="IPS">IPS</option>
+                  <option value="Privado">Privado</option>
+                  <option value="Sin seguro">Sin seguro</option>
+                </Form.Select>
+              </Form.Group>
             </Col>
-            <Col md={4}>
-              <Form.Label>Modalidad</Form.Label>
-              <Form.Select name="modality">
-                <option>Todas</option>
-                <option>Online</option>
-                <option>Presencial</option>
-              </Form.Select>
+            <Col xs={12} sm={4} className="mb-3">
+              <Form.Group controlId="formModality">
+                <Form.Label>Modalidad</Form.Label>
+                <Form.Select
+                  name="modality"
+                  value={quizData.modality}
+                  onChange={(e) => setQuizData({ ...quizData, modality: e.target.value })}
+                >
+                  <option value="Todas">Todas</option>
+                  <option value="Online">Online</option>
+                  <option value="Presencial">Presencial</option>
+                </Form.Select>
+              </Form.Group>
             </Col>
-            <Col md={4}>
-              <Form.Label>Especialidad</Form.Label>
-              <Form.Select name="specialty">
-                <option>Todas</option>
-                <option>Ansiedad</option>
-                <option>Depresión</option>
-                <option>Trauma</option>
-              </Form.Select>
+            <Col xs={12} sm={4} className="mb-3">
+              <Form.Group controlId="formSpecialty">
+                <Form.Label>Especialidad</Form.Label>
+                <Form.Select
+                  name="specialty"
+                  value={quizData.specialty}
+                  onChange={(e) => setQuizData({ ...quizData, specialty: e.target.value })}
+                >
+                  <option value="Todas">Todas</option>
+                  <option value="Ansiedad">Ansiedad</option>
+                  <option value="Depresión">Depresión</option>
+                  <option value="Trauma">Trauma</option>
+                  <option value="Parejas">Parejas</option>
+                </Form.Select>
+              </Form.Group>
             </Col>
           </Row>
-          <Button type="submit" variant="success" className="cta-button mt-3">Encontrar coincidencias</Button>
+          <Button variant="primary" type="submit" className="mt-3">
+            Buscar
+          </Button>
         </Form>
-      </section>
+      </Col>
+    </Row>
 
-      {/* Directory */}
-      <section id="therapist-directory" className="container py-5">
+    {/* Directory */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Terapeutas Vetted</h2>
-        <Row>
-          {filteredTherapists.map((t, index) => (
-            <Col md={4} key={index}>
-              <Card className="therapist-card">
-                <Card.Body>
-                  <Card.Title>{t.name}</Card.Title>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="green">
-                    <circle cx="10" cy="10" r="10" />
-                  </svg> Vetted
-                  <Card.Text>Especialidad: {t.specialty}</Card.Text>
-                  <Card.Text>Modalidad: {t.modality}</Card.Text>
-                  <Card.Text>Seguro: {t.seguro}</Card.Text>
-                  <Card.Text>Precio: {t.price}</Card.Text>
-                  {/* Botón ahora abre modal con t */}
-                  <Button variant="success" className="cta-button" onClick={() => handleOpen(t)}>Reservar Consulta Gratuita</Button>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </section>
+      </Col>
+      {filteredTherapists.length === 0 ? (
+        <Col xs={12}>
+          <p>No se encontraron terapeutas.</p>
+        </Col>
+      ) : (
+        filteredTherapists.map((therapist) => (
+          <Col xs={12} sm={6} md={4} key={therapist.id} className="mb-4">
+            <Card className="therapist-card">
+              <Card.Body>
+                <Card.Title>{therapist.name}</Card.Title>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="green">
+                  <circle cx="10" cy="10" r="10" />
+                </svg>
+                Vetted
+                <Card.Text>
+                  Especialidad: {therapist.specialty} <br />
+                  Modalidad: {therapist.modality} <br />
+                  Seguro: {therapist.seguro} <br />
+                  Precio: {therapist.price}
+                </Card.Text>
+                <Button
+                  variant="success"
+                  className="cta-button"
+                  onClick={() => handleOpen(therapist)}
+                >
+                  Reservar Consulta Gratuita
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))
+      )}
+    </Row>
 
-      {/* Map */}
-      <section className="container py-5">
+    {/* Map */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Terapeutas en Todo Paraguay</h2>
         <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-          <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={6} onLoad={loadMap}>
-            {filteredTherapists.map((t, index) => (
-              <Marker key={index} position={t.location} />
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={center}
+            zoom={6}
+            onLoad={loadMap}
+          >
+            {filteredTherapists.map((therapist) => (
+              <Marker key={therapist.id} position={therapist.location} />
             ))}
           </GoogleMap>
         </LoadScript>
-      </section>
+      </Col>
+    </Row>
 
-      {/* Testimonials */}
-      <section className="container py-5 grad-bg">
+    {/* Testimonials */}
+    <Row className="mb-5 grad-bg">
+      <Col xs={12}>
         <h2>Testimonios</h2>
         <p>5K+ terapeutas vetted, 350K clientes conectados, 5M+ seekers de terapia.</p>
-        <Row>
-          <Col md={4}>
-            <p>"Excelente match" - Cliente 1</p>
-          </Col>
-          <Col md={4}>
-            <p>"Cambió mi vida" - Cliente 2</p>
-          </Col>
-          <Col md={4}>
-            <p>"Profesionales calificados" - Cliente 3</p>
-          </Col>
-        </Row>
-      </section>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <p>"Excelente match" - Cliente 1</p>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <p>"Cambió mi vida" - Cliente 2</p>
+      </Col>
+      <Col xs={12} md={4} className="mb-3">
+        <p>"Profesionales calificados" - Cliente 3</p>
+      </Col>
+    </Row>
 
-      {/* Press */}
-      <section className="container py-5">
+    {/* Press */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Prensa</h2>
-        <Row>
-          <Col md={3}>
-            <img src="/press1.png" alt="Press Logo 1" className="mb-4" />
-          </Col>
-          <Col md={3}>
-            <img src="/press2.png" alt="Press Logo 2" className="mb-4" />
-          </Col>
-          <Col md={3}>
-            <img src="/press3.png" alt="Press Logo 3" className="mb-4" />
-          </Col>
-          <Col md={3}>
-            <img src="/press4.png" alt="Press Logo 4" className="mb-4" />
-          </Col>
-        </Row>
-      </section>
+      </Col>
+      <Col xs={12} md={3} className="mb-3">
+        <img src="/press1.png" alt="Press Logo 1" className="mb-4" />
+      </Col>
+      <Col xs={12} md={3} className="mb-3">
+        <img src="/press2.png" alt="Press Logo 2" className="mb-4" />
+      </Col>
+      <Col xs={12} md={3} className="mb-3">
+        <img src="/press3.png" alt="Press Logo 3" className="mb-4" />
+      </Col>
+      <Col xs={12} md={3} className="mb-3">
+        <img src="/press4.png" alt="Press Logo 4" className="mb-4" />
+      </Col>
+    </Row>
 
-      {/* Seguros */}
-      <section className="container py-5">
+    {/* Seguros */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Seguros Médicos Aceptados</h2>
-        <p>Nuestros terapeutas trabajan con seguros médicos locales como IPS y Privados, o sin seguro para accesibilidad en todo Paraguay.</p>
-      </section>
+        <p>
+          Nuestros terapeutas trabajan con seguros médicos locales como IPS y Privados, o sin
+          seguro para accesibilidad en todo Paraguay.
+        </p>
+      </Col>
+    </Row>
 
-      {/* FAQs */}
-      <section className="faq-section container py-5">
+    {/* FAQs */}
+    <Row className="mb-5">
+      <Col xs={12}>
         <h2>Preguntas Frecuentes</h2>
         <ul>
-          <li>¿Cómo ZONAPY conecta clientes y terapeutas? Con matching personalizado y consultas gratuitas en todo Paraguay.</li>
+          <li>
+            ¿Cómo ZONAPY conecta clientes y terapeutas? Con matching personalizado y consultas
+            gratuitas en todo Paraguay.
+          </li>
           <li>¿Cómo elegir el terapeuta correcto? Usa nuestro quiz y ve videos introductorios.</li>
           <li>¿Qué hace que nuestros terapeutas sean vetted? Proceso de entrevista intensivo.</li>
           <li>¿Cómo ZONAPY ahorra costos? Consultas gratuitas y seguros aceptados.</li>
         </ul>
-      </section>
+      </Col>
+    </Row>
 
-      {/* Footer */}
-      <footer className="footer">
+    {/* Footer */}
+    <Row className="footer text-center">
+      <Col xs={12}>
         <p>© 2025 ZONAPY – Terapia en Paraguay. Todos los derechos reservados.</p>
-      </footer>
+      </Col>
+    </Row>
 
-      {/* Modal de booking */}
-      <Modal show={showModal} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Programa tu Sesión con {selectedTherapist?.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleBookingSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Fecha</Form.Label>
-              <Form.Control type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} required />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Hora</Form.Label>
-              <Form.Control type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} required />
-            </Form.Group>
-            <Button variant="success" type="submit" className="cta-button">Reservar</Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-    </div>
-  );
+    {/* Modal de booking */}
+    <Modal show={showModal} onHide={handleClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>Programa tu Sesión con {selectedTherapist?.name}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={handleBookingSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>Fecha</Form.Label>
+            <Form.Control
+              type="date"
+              value={bookingDate}
+              onChange={(e) => setBookingDate(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Hora</Form.Label>
+            <Form.Control
+              type="time"
+              value={bookingTime}
+              onChange={(e) => setBookingTime(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Button variant="success" type="submit" className="cta-button">
+            Reservar
+          </Button>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  </Container>
+);
 }
 
 export default Home;
