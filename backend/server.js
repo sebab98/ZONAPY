@@ -138,26 +138,56 @@ app.get('/therapists', async (req, res) => {
     let sql = 'SELECT * FROM therapists';
     const params = [];
     let paramIndex = 1;
-    if (req.query.verified) {
-      sql += ` WHERE verified = $${paramIndex++}`;
-      params.push(req.query.verified);
+    let whereAdded = false; // Rastrea si WHERE ya se añadió
+
+    // Default: verified = 1 si no se especifica
+    if (!req.query.verified) {
+      sql += ' WHERE verified = 1';
+      whereAdded = true;
     } else {
-      sql += ` WHERE verified = 1`; // Default: solo verificados
+      sql += ' WHERE verified = $' + paramIndex++;
+      params.push(req.query.verified);
+      whereAdded = true;
     }
+
     if (req.query.seguro && req.query.seguro !== 'Todos') {
-      sql += ` ${params.length ? 'AND' : 'WHERE'} seguro = $${paramIndex++}`;
+      if (whereAdded) {
+        sql += ' AND';
+      } else {
+        sql += ' WHERE';
+        whereAdded = true;
+      }
+      sql += ' seguro = $' + paramIndex++;
       params.push(req.query.seguro);
     }
     if (req.query.modality && req.query.modality !== 'Todas') {
-      sql += ` ${params.length ? 'AND' : 'WHERE'} modality = $${paramIndex++}`;
+      if (whereAdded) {
+        sql += ' AND';
+      } else {
+        sql += ' WHERE';
+        whereAdded = true;
+      }
+      sql += ' modality = $' + paramIndex++;
       params.push(req.query.modality);
     }
     if (req.query.specialty && req.query.specialty !== 'Todas') {
-      sql += ` ${params.length ? 'AND' : 'WHERE'} specialty = $${paramIndex++}`;
+      if (whereAdded) {
+        sql += ' AND';
+      } else {
+        sql += ' WHERE';
+        whereAdded = true;
+      }
+      sql += ' specialty = $' + paramIndex++;
       params.push(req.query.specialty);
     }
     if (req.query.id) {
-      sql += ` ${params.length ? 'AND' : 'WHERE'} id = $${paramIndex++}`;
+      if (whereAdded) {
+        sql += ' AND';
+      } else {
+        sql += ' WHERE';
+        whereAdded = true;
+      }
+      sql += ' id = $' + paramIndex++;
       params.push(req.query.id);
     }
     const { rows } = await pool.query(sql, params);

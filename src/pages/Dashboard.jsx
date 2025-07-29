@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Form, Button, Table, Spinner } from 'react-bootstrap';
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const Dashboard = () => {
   const { currentUser } = useContext(AuthContext);
   const [therapistData, setTherapistData] = useState({
@@ -15,6 +16,29 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [unapprovedTherapists, setUnapprovedTherapists] = useState([]);
   const [loadingTherapists, setLoadingTherapists] = useState(true);
+const handleChange = (e) => {
+  setTherapistData({ ...therapistData, [e.target.name]: e.target.value });
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault(); // Evita recarga de página
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/therapists`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(therapistData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Error actualizando profile');
+    toast.success('Profile actualizado exitosamente!'); // Usa toast si ya lo tienes, o alert si no
+  } catch (error) {
+    toast.error('Error: ' + error.message);
+  }
+};
 
   useEffect(() => {
   const fetchData = async () => {
@@ -82,6 +106,7 @@ const Dashboard = () => {
 
   return (
   <Container className="py-5">
+    <ToastContainer /> {/* Agrega esto al inicio */}
     <h2>Dashboard</h2>
     {loading ? (
       <Spinner animation="border" role="status">
@@ -172,9 +197,9 @@ const Dashboard = () => {
                   );
                   const data = await response.json();
                   if (!response.ok) throw new Error(data.error || 'Error en suscripción');
-                  alert('¡Suscripción actualizada a premium!');
+                  toast.success('¡Suscripción actualizada a premium!');
                 } catch (error) {
-                  alert('Error: ' + error.message);
+                  toast.error('Error: ' + error.message);
                 }
               }}
             >
@@ -239,13 +264,13 @@ const Dashboard = () => {
                                 throw new Error(text || 'Error en la aprobación');
                               }
                               const data = await response.json();
-                              alert('Terapeuta aprobado exitosamente!');
+                              toast.success('Terapeuta aprobado exitosamente!');
                               const updatedTherapists = unapprovedTherapists.filter(
                                 (t) => t.id !== therapist.id
                               );
                               setUnapprovedTherapists(updatedTherapists);
                             } catch (error) {
-                              alert('Error: ' + error.message);
+                              toast.error('Error: ' + error.message);
                             }
                           }}
                         >
